@@ -18,9 +18,9 @@ document.addEventListener("DOMContentLoaded", function() {
             .attr("height", height);
 
             let nation = topojson.feature(topology, topology.objects.nation);
-            let states = topojson.feature(topology, topology.objects.states);
-            let counties = topojson.feature(topology, topology.objects.counties);
-            //console.log("nation", nation);
+            let states = topojson.mesh(topology, topology.objects.states, (a, b) => a !== b);
+            let counties = topojson.mesh(topology, topology.objects.counties, (a, b) => a !== b);
+            console.log("nation", nation);
 
             let path = d3.geoPath();
             //console.log(path);
@@ -34,19 +34,20 @@ document.addEventListener("DOMContentLoaded", function() {
             .attr("fill", "navy");
 
             svg.append("path")
-            .datum(topojson.mesh(topology, topology.objects.states), (a, b) => a !== b)
+            .datum(counties)
             .attr("fill", "none")
-            .attr("stroke", "white")
+            .attr("stroke", "cyan")
             .attr("stroke-linejoin", "round")
             .attr("d", path);
 
             svg.append("path")
-            .datum(topojson.mesh(topology, topology.objects.counties), (a, b) => a !== b)
+            .datum(states)
             .attr("fill", "none")
-            .attr("stroke", "white")
+            .attr("stroke", "red")
             .attr("stroke-linejoin", "round")
             .attr("d", path);
 
+            
         })
     });
     
