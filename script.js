@@ -10,35 +10,40 @@ document.addEventListener("DOMContentLoaded", function() {
             console.log(topology);
             //console.log(education);
 
+            /* CONSTANTS */
+
+            //Width and height to define the svg constant.
             const width = 1000;
             const height = 1000;
-
             const svg = d3.select("body").append("svg")
             .attr("width", width)
             .attr("height", height);
 
+            //Conversions of the nation, states, and countines objects found inside the topoJSON dataset provided.
             let nation = topojson.feature(topology, topology.objects.nation);
             let states = topojson.mesh(topology, topology.objects.states, (a, b) => a !== b);
-            let counties = topojson.mesh(topology, topology.objects.counties, (a, b) => a !== b);
+            let counties = topojson.feature(topology, topology.objects.counties);
             console.log("nation", nation);
+            console.log("states", states);
+            console.log("counties", counties);
 
             let path = d3.geoPath();
-            //console.log(path);
             
+            //minEdu and maxEdu are used to define the domain for the color scales, for use in fill attributes later.
+            const minEdu = d3.min(education, (val) => val["bachelorsOrHigher"]);
+            const maxEdu = d3.max(education, (val) => val["bachelorsOrHigher"]);
+            const color = d3.scaleQuantize().domain([minEdu, maxEdu]).range(["lightblue", "blue", "navy", "black"]);
 
+            /* SVG APPENDS */
 
-            //svg.append("path").attr("d", path(nation));
-            svg.append("path")
-            .datum(nation)
+            svg.append("g").selectAll("path")
+            .data(counties.features)
+            .enter()
+            .append("path")
+            .attr("fill", (d) => color(education.filter((val) => val["fips"] === d.id)[0]["bachelorsOrHigher"]))
             .attr("d", path)
-            .attr("fill", "navy");
-
-            svg.append("path")
-            .datum(counties)
-            .attr("fill", "none")
-            .attr("stroke", "cyan")
-            .attr("stroke-linejoin", "round")
-            .attr("d", path);
+            .attr("id", (d) => d.id)
+            .attr("data-area-name", (d) => education.filter((val) => val["fips"] === d.id)[0]["area_name"]);
 
             svg.append("path")
             .datum(states)
