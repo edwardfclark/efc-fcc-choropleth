@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function() {
             //minEdu and maxEdu are used to define the domain for the color scales, for use in fill attributes later.
             const minEdu = d3.min(education, (val) => val["bachelorsOrHigher"]);
             const maxEdu = d3.max(education, (val) => val["bachelorsOrHigher"]);
-            const color = d3.scaleQuantize().domain([minEdu, maxEdu]).range(["lightblue", "blue", "navy", "black"]);
+            const color = d3.scaleQuantize().domain([minEdu, maxEdu]).range(["#ffffff", "#e0f5ec", "#c0e9da", "#9bd9c7", "#74c4b7", "#41a2ab", "#237c8b", "#00556d", "#003544"]);
 
             /* SVG APPENDS */
 
@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", function() {
             svg.append("path")
             .datum(states)
             .attr("fill", "none")
-            .attr("stroke", "red")
+            .attr("stroke", "lightgrey")
             .attr("stroke-linejoin", "round")
             .attr("d", path);
 
