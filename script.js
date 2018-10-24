@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", function() {
             //Width and height to define the svg constant.
             const width = 1000;
             const height = 1000;
+            const padding = {top: 0, left: 20, bottom: 0, right: 0}
             const svg = d3.select("body").append("svg")
             .attr("width", width)
             .attr("height", height);
@@ -35,6 +36,16 @@ document.addEventListener("DOMContentLoaded", function() {
             const colorsArr = getGradient("rgb(255, 255, 255)", "rgb(0, 82, 96)", 100);
             const color = d3.scaleQuantize().domain([minEdu, maxEdu]).range(colorsArr);
             console.log(colorsArr);
+
+            //Constants for use in the legend.
+            const legendRectHeight = 20;
+            const legendRectWidth = 3;
+            const legendY = 630;
+            const legendWidth = (colorsArr.length-1) * legendRectWidth;
+            const legendScale = d3.scaleLinear().domain([minEdu, maxEdu]).range([padding.left, padding.left+legendWidth]);
+            const legendAxis = d3.axisBottom(legendScale).tickFormat((d) => d+"%" );
+
+            const tooltipDiv = d3.select("body").append("div").attr("id", "tooltip").style("opacity", 0);
 
             /* FUNCTIONS */
 
@@ -65,18 +76,32 @@ document.addEventListener("DOMContentLoaded", function() {
                 return interpolatedArray;
             }
 
+            //getCountyData takes an id as an arg, returns an object from the education dataset that corresponds to that id.
+            function getCountyData(id) {
+                return education.filter((val) => val["fips"] === id)[0];
+            }
+
             /* SVG APPENDS */
 
             svg.append("g").selectAll("path")
             .data(counties.features)
             .enter()
             .append("path")
-            .attr("fill", (d) => `rgb(${color(education.filter((val) => val["fips"] === d.id)[0]["bachelorsOrHigher"])})`)
+            .attr("fill", (d) => `rgb(${color(getCountyData(d.id)["bachelorsOrHigher"])})`)
             .attr("d", path)
             .attr("data-fips", (d) => d.id)
-            .attr("data-education", (d) => education.filter((val) => val["fips"] === d.id)[0]["bachelorsOrHigher"])
+            .attr("data-education", (d) => getCountyData(d.id)["bachelorsOrHigher"])
             .attr("class", "county")
-            .attr("data-area-name", (d) => education.filter((val) => val["fips"] === d.id)[0]["area_name"]);
+            .attr("data-area-name", (d) => getCountyData(d.id)["area_name"])
+            .on("mouseover", (d) => {
+                //The tooltip variable stores the object from the education dataset that corresponds to the selected county.
+                let tooltip = getCountyData(d.id);
+                tooltipDiv.transition().duration(200).style("opacity", 1);
+
+            })
+            .on("mouseout", (d) => {
+                tooltipDiv.transition().duration(200).style("opacity", 0);
+            });
 
             svg.append("path")
             .datum(states)
@@ -84,6 +109,27 @@ document.addEventListener("DOMContentLoaded", function() {
             .attr("stroke", "lightgrey")
             .attr("stroke-linejoin", "round")
             .attr("d", path);
+
+            //Legend.
+
+            svg.append("g").attr("id", "legend");
+            const legend = d3.select("#legend");
+
+            legend.selectAll("rect")
+            .data(colorsArr)
+            .enter()
+            .append("rect")
+            .attr("x", (d, i) => padding.left + i*legendRectWidth)
+            .attr("y", legendY)
+            .attr("width", legendRectWidth)
+            .attr("height", legendRectHeight)
+            .attr("fill", (d) => `rgb(${d})`);
+
+            //Legend's Axis.
+            legend.append("g")
+            .attr("transform", `translate(0,${legendY+legendRectHeight})`)
+            .attr("id", "legend-axis")
+            .call(legendAxis);
 
             
         })
