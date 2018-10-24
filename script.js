@@ -32,7 +32,38 @@ document.addEventListener("DOMContentLoaded", function() {
             //minEdu and maxEdu are used to define the domain for the color scales, for use in fill attributes later.
             const minEdu = d3.min(education, (val) => val["bachelorsOrHigher"]);
             const maxEdu = d3.max(education, (val) => val["bachelorsOrHigher"]);
-            const color = d3.scaleQuantize().domain([minEdu, maxEdu]).range(["#ffffff", "#e0f5ec", "#c0e9da", "#9bd9c7", "#74c4b7", "#41a2ab", "#237c8b", "#00556d", "#003544"]);
+            const colorsArr = getGradient("rgb(255, 255, 255)", "rgb(0, 82, 96)", 100);
+            const color = d3.scaleQuantize().domain([minEdu, maxEdu]).range(colorsArr);
+            console.log(colorsArr);
+
+            /* FUNCTIONS */
+
+            //interpolate() returns a color value midway between the two provided color values. The degree of change depends on the factor.
+            //This function is called inside the getGradient function.
+            function interpolate(color1, color2, factor) {
+                if (arguments.length < 3) {
+                    factor = 0.5;
+                }
+        
+                let result = color1.slice();
+                for (let i = 0; i < 3; i++) {
+                    result[i] = Math.round(result[i] + factor * (color2[i] - color1[i]));
+                }
+                return result;
+            }
+        
+            //getGradient() takes three args - c1 and c2 are colors in rgb() format, and steps is the number of intermediary colors desired.
+            //The function returns a 2D array. Each value in the array is another array of three numbers, designed to fit into rgb() values.
+            function getGradient(c1, c2, steps) {
+                let stepFactor = 1 / (steps - 1), interpolatedArray = [];
+                c1 = c1.match(/\d+/g).map(Number);
+                c2 = c2.match(/\d+/g).map(Number);
+        
+                for (let i = 0; i < steps; i++) {
+                    interpolatedArray.push(interpolate(c1, c2, stepFactor * i));
+                }
+                return interpolatedArray;
+            }
 
             /* SVG APPENDS */
 
@@ -40,9 +71,11 @@ document.addEventListener("DOMContentLoaded", function() {
             .data(counties.features)
             .enter()
             .append("path")
-            .attr("fill", (d) => color(education.filter((val) => val["fips"] === d.id)[0]["bachelorsOrHigher"]))
+            .attr("fill", (d) => `rgb(${color(education.filter((val) => val["fips"] === d.id)[0]["bachelorsOrHigher"])})`)
             .attr("d", path)
-            .attr("id", (d) => d.id)
+            .attr("data-fips", (d) => d.id)
+            .attr("data-education", (d) => education.filter((val) => val["fips"] === d.id)[0]["bachelorsOrHigher"])
+            .attr("class", "county")
             .attr("data-area-name", (d) => education.filter((val) => val["fips"] === d.id)[0]["area_name"]);
 
             svg.append("path")
