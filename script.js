@@ -10,12 +10,13 @@ document.addEventListener("DOMContentLoaded", function() {
             console.log(topology);
             //console.log(education);
 
+
             /* CONSTANTS */
 
             //Width and height to define the svg constant.
             const width = 1000;
-            const height = 1000;
-            const padding = {top: 0, left: 20, bottom: 0, right: 0}
+            const height = 800;
+            const padding = {top: 50, left: 20, bottom: 0, right: 0}
             const svg = d3.select("body").append("svg")
             .attr("width", width)
             .attr("height", height);
@@ -24,16 +25,14 @@ document.addEventListener("DOMContentLoaded", function() {
             let nation = topojson.feature(topology, topology.objects.nation);
             let states = topojson.mesh(topology, topology.objects.states, (a, b) => a !== b);
             let counties = topojson.feature(topology, topology.objects.counties);
-            console.log("nation", nation);
-            console.log("states", states);
-            console.log("counties", counties);
-
+            const meshColor = "rgb(245, 255, 183)";
+            
             let path = d3.geoPath();
             
             //minEdu and maxEdu are used to define the domain for the color scales, for use in fill attributes later.
             const minEdu = d3.min(education, (val) => val["bachelorsOrHigher"]);
             const maxEdu = d3.max(education, (val) => val["bachelorsOrHigher"]);
-            const colorsArr = getGradient("rgb(255, 255, 255)", "rgb(0, 82, 96)", 100);
+            const colorsArr = getGradient("rgb(255, 255, 255)", "rgb(65, 0, 104)", 100);
             const color = d3.scaleQuantize().domain([minEdu, maxEdu]).range(colorsArr);
             console.log(colorsArr);
 
@@ -45,7 +44,15 @@ document.addEventListener("DOMContentLoaded", function() {
             const legendScale = d3.scaleLinear().domain([minEdu, maxEdu]).range([padding.left, padding.left+legendWidth]);
             const legendAxis = d3.axisBottom(legendScale).tickFormat((d) => d+"%" );
 
-            const tooltipDiv = d3.select("body").append("div").attr("id", "tooltip").style("opacity", 0);
+            //Constants for use in the tooltip.
+            const tooltipWidth = 140;
+            const tooltipHeight = 55;
+            const tooltipDiv = d3.select("body").append("div")
+            .attr("id", "tooltip")
+            .style("opacity", 0)
+            .style("width", tooltipWidth+"px")
+            .style("height", tooltipHeight+"px");
+
 
             /* FUNCTIONS */
 
@@ -81,9 +88,18 @@ document.addEventListener("DOMContentLoaded", function() {
                 return education.filter((val) => val["fips"] === id)[0];
             }
 
-            /* SVG APPENDS */
+            function generateTooltip(d) {
+                let html = "<p>";
+                html += `${d["area_name"]}, ${d["state"]}<br />`;
+                html += `Higher Edu.: ${d["bachelorsOrHigher"]}%`;
+                html += "</p>";
+                return html;
+            }
 
-            svg.append("g").selectAll("path")
+
+            /* D3 APPENDS */
+
+            svg.append("g").attr("transform", `translate(0,${padding.top})`).selectAll("path")
             .data(counties.features)
             .enter()
             .append("path")
@@ -96,18 +112,29 @@ document.addEventListener("DOMContentLoaded", function() {
             .on("mouseover", (d) => {
                 //The tooltip variable stores the object from the education dataset that corresponds to the selected county.
                 let tooltip = getCountyData(d.id);
-                tooltipDiv.transition().duration(200).style("opacity", 1);
-
+                tooltipDiv.transition().duration(100).style("opacity", 1);
+                tooltipDiv.html(generateTooltip(tooltip))
+                .style("left", (d3.event.pageX)+"px")
+                .style("top", (d3.event.pageY-tooltipHeight)+"px");
             })
             .on("mouseout", (d) => {
-                tooltipDiv.transition().duration(200).style("opacity", 0);
+                tooltipDiv.transition().duration(100).style("opacity", 0);
             });
 
             svg.append("path")
             .datum(states)
             .attr("fill", "none")
-            .attr("stroke", "lightgrey")
+            .attr("stroke", meshColor)
             .attr("stroke-linejoin", "round")
+            .attr("transform", `translate(0,${padding.top})`)
+            .attr("d", path);
+
+            svg.append("path")
+            .datum(nation)
+            .attr("fill", "none")
+            .attr("stroke", meshColor)
+            .attr("stroke-linejoin", "round")
+            .attr("transform", `translate(0,${padding.top})`)
             .attr("d", path);
 
             //Legend.
@@ -120,17 +147,30 @@ document.addEventListener("DOMContentLoaded", function() {
             .enter()
             .append("rect")
             .attr("x", (d, i) => padding.left + i*legendRectWidth)
-            .attr("y", legendY)
+            .attr("y", padding.top+legendY)
             .attr("width", legendRectWidth)
             .attr("height", legendRectHeight)
             .attr("fill", (d) => `rgb(${d})`);
 
             //Legend's Axis.
             legend.append("g")
-            .attr("transform", `translate(0,${legendY+legendRectHeight})`)
+            .attr("transform", `translate(0,${padding.top+legendY+legendRectHeight})`)
             .attr("id", "legend-axis")
             .call(legendAxis);
 
+            //Text labels.
+            svg.append("text")
+            .attr("id", "title")
+            .attr("x", width/2)
+            .attr("y", padding.top)
+            .attr("text-anchor", "middle")
+            .text("United States Educational Attainment");
+
+            svg.append("text")
+            .attr("id", "description")
+            .attr("x", padding.left)
+            .attr("y", padding.top+legendY+legendRectHeight+40)
+            .text("Percentage of adults age 25 and older with a bachelor's degree or higher (2010-2014)");
             
         })
     });
