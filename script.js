@@ -53,10 +53,6 @@ document.addEventListener("DOMContentLoaded", function() {
             .style("width", tooltipWidth+"px")
             .style("height", tooltipHeight+"px");
 
-            //This uses the d3-tip library to create my tooltips. Mouseover events defined later in the code show or hide the tip.
-            let tip = d3.tip().attr("class", "d3-tip").offset([-8,0]).html((d) => generateTooltip(getCountyData(d.id)));
-            svg.call(tip);
-
 
             /* FUNCTIONS */
 
@@ -92,9 +88,12 @@ document.addEventListener("DOMContentLoaded", function() {
                 return education.filter((val) => val["fips"] === id)[0];
             }
 
-            //generateTooltip() takes an object from the education dataset as an arg and generates HTML for use in the tooltip.
             function generateTooltip(d) {
-                return `<p>${d["area_name"]}, ${d["state"]}: ${d["bachelorsOrHigher"]}%</p>`;
+                let html = "<p>";
+                html += `${d["area_name"]}, ${d["state"]}<br />`;
+                html += `Higher Edu.: ${d["bachelorsOrHigher"]}%`;
+                html += "</p>";
+                return html;
             }
 
 
@@ -110,8 +109,18 @@ document.addEventListener("DOMContentLoaded", function() {
             .attr("data-education", (d) => getCountyData(d.id)["bachelorsOrHigher"])
             .attr("class", "county")
             .attr("data-area-name", (d) => getCountyData(d.id)["area_name"])
-            .on("mouseover", tip.show)
-            .on("mouseout", tip.hide);
+            .on("mouseover", (d) => {
+                //The tooltip variable stores the object from the education dataset that corresponds to the selected county.
+                let tooltip = getCountyData(d.id);
+                tooltipDiv.transition().duration(100).style("opacity", 1);
+                tooltipDiv.html(generateTooltip(tooltip))
+                .attr("data-education", tooltip.bachelorsOrHigher)
+                .style("left", (d3.event.pageX)+"px")
+                .style("top", (d3.event.pageY-tooltipHeight)+"px");
+            })
+            .on("mouseout", (d) => {
+                tooltipDiv.transition().duration(100).style("opacity", 0);
+            });
 
             svg.append("path")
             .datum(states)
