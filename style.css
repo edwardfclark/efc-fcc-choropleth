@@ -3,19 +3,6 @@ svg {
     margin: 0 auto;
 }
 
-div#tooltip {	
-    position: absolute;			
-    text-align: left;			
-    padding: 0 10px;				
-    font: 12px sans-serif;		
-    background: darkslategrey;	
-    color: white;
-    border: 0px;		
-    border-radius: 8px;			
-    pointer-events: none;
-    text-align: center;
-}
-
 #title {
     font-size: 35px;
     font-family: sans-serif;
@@ -25,3 +12,34 @@ div#tooltip {
     font-family: sans-serif;
     font-size: 14px;
 }
+
+/* Styling for the tooltip. */
+.d3-tip {
+    font: 12px sans-serif;	
+    line-height: 1;
+    font-weight: bold;
+    padding: 5px 10px 5px 10px;
+    background: darkslategrey;
+    color: #fff;
+    border-radius: 8px;
+  }
+  
+  /* Creates a small triangle extender for the tooltip */
+  .d3-tip:after {
+    box-sizing: border-box;
+    display: inline;
+    font-size: 10px;
+    width: 100%;
+    line-height: 1;
+    color: darkslategrey;
+    content: "\25BC";
+    position: absolute;
+    text-align: center;
+  }
+  
+  /* Style northward tooltips differently */
+  .d3-tip.n:after {
+    margin: -1px 0 0 0;
+    top: 100%;
+    left: 0;
+  }
